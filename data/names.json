@@ -1,0 +1,38 @@
+{
+  "note": "Word banks for set names. hue words key off the primary neon's hue family, mood words key off the facade. Names are deterministic: the same five colours always get the same name.",
+  "patterns": [
+    "{place} {noun}",
+    "{hue} {noun}",
+    "{mood} {hue}",
+    "{noun} in {place}",
+    "{hue} over {place}",
+    "{mood} {noun}",
+    "{place} {hue}",
+    "{noun} at {place}"
+  ],
+  "places": ["Kowloon","Shinjuku","Sector 7","the Lower Stack","Night Market","Undercity","Canal District","Megablock 9","Harbor Arcology","Chiba","Old Neon Row","Spire Junction","Dock 14","the Sprawl","Ring Road","Ward 3"],
+  "nouns": ["Static","Downpour","Afterhours","Overclock","Blackout","Rain Shift","Signal","Glitch","Arcade","Undertow","Long Night","Feedback","Lockdown","Heatwave","Brownout","Graveyard Shift","Crosstalk","Datastorm","Payday","Last Train"],
+  "hueWords": {
+    "magenta": ["Magenta","Sakura","Candy","Hot Pink","Fuchsia"],
+    "red": ["Crimson","Redline","Laser","Blood Neon"],
+    "orange": ["Sodium","Amber","Tangerine","Streetlamp"],
+    "yellow": ["Hazard","Taxi","Gold Rush","Caution"],
+    "lime": ["Acid","Lime","Radium","Battery"],
+    "green": ["Toxic","Matrix","Biohazard","Emerald"],
+    "aqua": ["Holo","Coolant","Mint","Lagoon"],
+    "cyan": ["Cyan","Ice","Glacier","Arc"],
+    "blue": ["Electric","Cobalt","Plasma","Azure"],
+    "violet": ["Ultraviolet","Violet","Blacklight","Synth"],
+    "white": ["Chrome","Halogen","White Noise","Fluorescent"]
+  },
+  "moodWords": {
+    "neutral": ["Concrete","Asphalt","Smog","Ashfall"],
+    "blue": ["Midnight","Cold","Rainy","Deepnight"],
+    "violet": ["Velvet","Bruised","Dusk","Nocturne"],
+    "teal": ["Deepwater","Harbor","Tidal","Submerged"],
+    "red": ["Rust","Ember","Oxide","Scorched"],
+    "warm": ["Sodium","Grimy","Tobacco","Smoldering"],
+    "olive": ["Toxic","Swamp","Smoggy","Industrial"],
+    "green": ["Jungle","Overgrown","Mossy","Feral"]
+  }
+}

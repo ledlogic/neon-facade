@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Facade</title>
+<meta name="description" content="Cyberpunk building paint palette randomizer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"></div>
+    <div>
+      <h1>Neon Facade</h1>
+      <p class="sub">Cyberpunk building palettes, matched to Warpaints Fanatic</p>
+    </div>
+  </div>
+  <div class="actions">
+    <button id="regen" class="btn primary">Regenerate <kbd>Space</kbd></button>
+    <button id="copyLink" class="btn">Copy link</button>
+    <button id="copyList" class="btn">Copy paint list</button>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-text">
+      <p class="eyebrow"><span id="schemeLabel"></span></p>
+      <h2 id="setName">Loading…</h2>
+      <div id="strip" class="strip" aria-hidden="true"></div>
+      <p id="schemeNote" class="scheme-note"></p>
+      <ul id="notes" class="notes"></ul>
+    </div>
+    <div class="temp">
+      <label for="temp">Generator mood</label>
+      <div class="temp-row"><span>Safe</span><input type="range" id="temp" min="0.2" max="3" step="0.1" value="1"><span>Wild</span></div>
+      <p class="meta">Temperature <span id="tempVal">1.0</span>. Safe picks the top scoring set, wild explores. Locked swatches stay put on regenerate.</p>
+    </div>
+  </section>
+
+  <section id="swatches" class="swatches" aria-live="polite"></section>
+
+  <section class="lower">
+    <div class="card feedback">
+      <h3>Rate this set</h3>
+      <div id="stars" class="stars" role="radiogroup" aria-label="Rating">
+        <button data-n="1" role="radio" aria-label="1 star">★</button>
+        <button data-n="2" role="radio" aria-label="2 stars">★</button>
+        <button data-n="3" role="radio" aria-label="3 stars">★</button>
+        <button data-n="4" role="radio" aria-label="4 stars">★</button>
+        <button data-n="5" role="radio" aria-label="5 stars">★</button>
+      </div>
+      <textarea id="note" rows="3" placeholder="What worked or didn't (optional, kept in the export)"></textarea>
+      <button id="saveRating" class="btn primary">Save feedback and regenerate</button>
+      <p class="meta">The ▲ ▼ votes on each swatch are saved with the rating. 3 stars is neutral, colours and pairings in 4 and 5 star sets come up more often, 1 and 2 star ones less.</p>
+      <h4>What the generator has learned</h4>
+      <div id="learned"></div>
+      <div class="fb-actions">
+        <button id="exportFb" class="btn small">Export feedback.json</button>
+        <label class="btn small">Import<input type="file" id="importFb" accept="application/json" hidden></label>
+        <button id="resetFb" class="btn small ghost">Clear local</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>Rated sets</h3>
+    <div id="history" class="history"></div>
+  </section>
+
+  <footer class="foot">
+    <p>Paint names and codes are from The Army Painter's Warpaints Fanatic range. Hex values for paints are approximate, so treat ΔE as a guide and check against the bottle. Not affiliated with The Army Painter.</p>
+  </footer>
+</main>
+<div id="toast" class="toast" role="status"></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

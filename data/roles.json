@@ -1,0 +1,10 @@
+{
+  "note": "Five slots, in display order. tone must match a tone in colors.json.",
+  "roles": [
+    {"key":"facade","label":"Facade","tone":"dark","usage":"Main walls and large panels. Basecoat the whole building in this, it carries most of the surface area."},
+    {"key":"structure","label":"Structure","tone":"dark","usage":"Girders, ductwork, window frames, recessed panels and roof clutter. A step lighter or darker than the facade so the shapes read."},
+    {"key":"accent","label":"Hardware","tone":"accent","usage":"Pipes, railings, AC units, antennas, hazard markings and weathering. Small areas, drybrush or edge highlight."},
+    {"key":"neon1","label":"Primary neon","tone":"lit","usage":"Main signage, holo-ads and the strongest light source. Paint over a white or very light basecoat, then glaze the glow onto nearby surfaces."},
+    {"key":"neon2","label":"Secondary neon","tone":"lit","usage":"Lit windows, edge strips, door lights and reflected glow on wet streets. Supports the primary, use it in more places but smaller."}
+  ]
+}

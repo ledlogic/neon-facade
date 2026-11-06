@@ -1,0 +1,10 @@
+{
+  "note": "Harmony rules for the two neon slots. hueOffset is the target hue distance (CIELCh degrees) between primary and secondary neon, tolerance is how strict. darkTint picks what hue the facade should lean toward: primary, secondary, complement (opposite of primary), between (midpoint of both neons) or cool (blue-black).",
+  "schemes": [
+    {"id":"complementary","label":"Complementary clash","hueOffset":175,"tolerance":25,"darkTint":"cool","weight":1.2,"note":"Opposite neons, maximum pop. The classic magenta and cyan look."},
+    {"id":"split","label":"Split complementary","hueOffset":145,"tolerance":22,"darkTint":"between","weight":1.1,"note":"Near-opposite neons, slightly softer than a straight clash."},
+    {"id":"triadic","label":"Triadic accent","hueOffset":120,"tolerance":18,"darkTint":"complement","weight":0.8,"note":"Neons a third of the wheel apart, facade pulls toward the missing third."},
+    {"id":"analogous","label":"Analogous glow","hueOffset":45,"tolerance":18,"darkTint":"primary","weight":0.7,"note":"Neighbouring neons that bleed into each other, facade tinted the same way. Moody and cohesive."},
+    {"id":"monoglow","label":"Single-hue glow","hueOffset":15,"tolerance":12,"darkTint":"primary","weight":0.4,"note":"One dominant light colour in two intensities, very cinematic."}
+  ]
+}
