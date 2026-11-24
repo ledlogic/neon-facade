@@ -12,15 +12,32 @@ export function prepare(raw) {
   const pools = { dark: [], lit: [], accent: [] };
   colors.forEach(c => (pools[c.tone] || (pools[c.tone] = [])).push(c));
   colors.forEach(c => { c.matches = matchPaints(c, paints); });
+  // Any Warpaints mode: every paint is a colour in its own right, id = product code.
+  paints.forEach(p => {
+    p.id = p.code;
+    p.matches = matchPaints(p, paints.filter(o => o !== p));
+    byId[p.id] = p;
+  });
+  const openSchemes = raw.schemes.openSchemes || [];
   return {
     paints, colors, byId, pools,
     roles: raw.roles.roles,
     schemes: raw.schemes.schemes,
     schemeById: Object.fromEntries(raw.schemes.schemes.map(s => [s.id, s])),
+    openRoles: raw.roles.openRoles || [],
+    openSchemes,
+    openSchemeById: Object.fromEntries(openSchemes.map(s => [s.id, s])),
     names: raw.names,
     linkTemplate: raw.paints.linkTemplate,
   };
 }
+
+// Which slots form the pairings feedback learns from, per mode: [slotA, slotB, weight].
+export const PAIRS = {
+  cyber: [[3, 4, 1], [0, 3, 1], [0, 4, 0.5], [0, 1, 0.5]],
+  open: [[0, 3, 1], [0, 4, 1], [3, 4, 0.5], [0, 1, 0.5], [0, 2, 0.5]],
+};
+export const modeOf = e => (e && e.mode) || 'cyber';
 
 export function matchPaints(c, paints) {
   const scored = paints.map(p => ({ paint: p, dE: deltaE2000(c.lab, p.lab) })).sort((a, b) => a.dE - b.dE);
@@ -40,12 +57,13 @@ export function matchQuality(dE) {
 
 // ---------- learning from feedback ----------
 // Each entry: { ts, ids:[5], scheme, rating:0-5 (0 = none), votes:[-1|0|1 x5], note, name }
-export function buildModel(entries) {
+export function buildModel(entries, mode = 'cyber') {
   const color = {}, pair = {}, scheme = {};
   const add = (m, k, v) => { const e = m[k] || (m[k] = { s: 0, n: 0 }); e.s += v; e.n++; };
+  const pairs = PAIRS[mode] || PAIRS.cyber;
   let count = 0;
   for (const e of entries || []) {
-    if (!e || !Array.isArray(e.ids) || e.ids.length !== 5) continue;
+    if (!e || !Array.isArray(e.ids) || e.ids.length !== 5 || modeOf(e) !== mode) continue;
     count++;
     const rated = e.rating >= 1 && e.rating <= 5;
     const r = rated ? (e.rating - 3) / 2 : 0;
@@ -54,10 +72,7 @@ export function buildModel(entries) {
       if (rated || v) add(color, id, r + v);
     });
     if (rated) {
-      add(pair, pairKey(e.ids[3], e.ids[4]), r);
-      add(pair, pairKey(e.ids[0], e.ids[3]), r);
-      add(pair, pairKey(e.ids[0], e.ids[4]), r * 0.5);
-      add(pair, pairKey(e.ids[0], e.ids[1]), r * 0.5);
+      for (const [i, j, w] of pairs) add(pair, pairKey(e.ids[i], e.ids[j]), r * w);
       if (e.scheme) add(scheme, e.scheme, r);
     }
   }
@@ -167,6 +182,119 @@ export function generate(D, model = emptyModel(), opts = {}) {
   return { ids: pick.ids, scheme: scheme.id, score: pick.score, notes: pick.notes };
 }
 
+// ---------- Any Warpaints mode ----------
+const HUELESS = 12; // below this LCh chroma a paint counts as neutral, it harmonises with anything
+const hasHue = c => c.lch.C >= HUELESS;
+
+function hueFit(a, b, target, tol) {
+  if (target == null) return 0;
+  if (!hasHue(a) || !hasHue(b)) return -0.3;
+  const dev = (hueDist(a.lch.h, b.lch.h) - target) / tol;
+  return -Math.min(dev * dev, 9);
+}
+
+function valuePartner(base, cand, dir) {
+  // dir -1 = shade (darker), +1 = highlight (lighter). Returns a weight, 0 if unusable.
+  const dL = (cand.lch.L - base.lch.L) * dir;
+  if (dL < 6 || dL > 45) return 0;
+  let w = Math.exp(-(((dL - 18) / 12) ** 2));
+  if (cand.family === base.family) w *= 6;
+  if (hasHue(base) && hasHue(cand)) w *= Math.exp(-((hueDist(base.lch.h, cand.lch.h) / 30) ** 2));
+  else if (hasHue(base) !== hasHue(cand)) w *= 0.35;
+  return w;
+}
+
+export function scoreOpen(D, ids, scheme, model = emptyModel()) {
+  const [b, sh, hi, se, ac] = ids.map(id => D.byId[id]);
+  let s = 0;
+  const notes = [];
+
+  // harmony between base, secondary and accent
+  s += hueFit(b, se, scheme.sec, scheme.tol);
+  s += hueFit(b, ac, scheme.acc, scheme.tol) * 0.7;
+  if (scheme.secAcc != null) s += hueFit(se, ac, scheme.secAcc, scheme.tol) * 0.5;
+  if (scheme.sec != null && hasHue(b) && hasHue(se)) notes.push(`Secondary ${Math.round(hueDist(b.lch.h, se.lch.h))}° from base, target ${scheme.sec}°`);
+  else if (scheme.sec != null) notes.push('Neutral in the mix, it sits with any hue');
+
+  // scheme-specific limits
+  if (scheme.baseMaxC != null) s -= Math.max(0, b.lch.C - scheme.baseMaxC) / 8;
+  if (scheme.secMaxC != null) s -= Math.max(0, se.lch.C - scheme.secMaxC) / 8;
+  if (scheme.accentMinC != null && ac.kind !== 'metallic') s -= Math.max(0, scheme.accentMinC - ac.lch.C) / 10;
+  if (scheme.accentKind) s += ac.kind === scheme.accentKind ? 1.2 : -1.2;
+
+  // base and secondary must read as different areas
+  const dBS = deltaE2000(b.lab, se.lab);
+  if (dBS < 14) s -= (14 - dBS) / 4;
+
+  // accent pops against both large areas
+  const dA = Math.min(deltaE2000(ac.lab, b.lab), deltaE2000(ac.lab, se.lab));
+  if (dA < 22) s -= (22 - dA) / 8; else s += 0.4;
+  if (ac.kind !== 'metallic') s += Math.min(ac.lch.C, 60) / 120;
+
+  // shade and highlight stay in the base's family at a usable value step
+  const shW = valuePartner(b, sh, -1), hiW = valuePartner(b, hi, 1);
+  s += Math.log(shW + 0.02) * 0.5 + Math.log(hiW + 0.02) * 0.5;
+  if (sh.family === b.family && hi.family === b.family) { s += 0.5; notes.push(`Shade and highlight from the ${b.family} triad`); }
+  else notes.push('Shade and highlight borrowed from a neighbouring range');
+
+  // a muddy highlight or a shade lighter than the base breaks the value ladder
+  if (!(sh.lch.L < b.lch.L && b.lch.L < hi.lch.L)) s -= 3;
+
+  // learned preferences
+  const fb = ids.reduce((t, id) => t + (model.color[id] || 0), 0) * 0.9
+    + PAIRS.open.reduce((t, [i, j, w]) => t + (model.pair[pairKey(ids[i], ids[j])] || 0) * w, 0)
+    + (model.scheme[scheme.id] || 0);
+  s += fb;
+  if (Math.abs(fb) > 0.05) notes.push(`Feedback ${fb > 0 ? '+' : ''}${fb.toFixed(2)}`);
+  return { score: s, notes };
+}
+
+export function openPool(D, slot) {
+  const kinds = D.openRoles[slot]?.kinds || ['standard'];
+  return D.paints.filter(p => kinds.includes(p.kind));
+}
+
+export function generateOpen(D, model = emptyModel(), opts = {}) {
+  const rnd = opts.rng || Math.random;
+  const locked = opts.locked || [null, null, null, null, null];
+  const T = opts.temperature ?? 1;
+  const scheme = opts.scheme
+    ? D.openSchemeById[opts.scheme]
+    : pickWeighted(D.openSchemes, s => (s.weight ?? 1) * Math.exp((model.scheme[s.id] || 0) * 1.5), rnd);
+  const pools = [0, 1, 2, 3, 4].map(i => openPool(D, i));
+  const like = p => Math.exp((model.color[p.id] || 0) * 1.0);
+  const fit = (a, c, target) => (target == null ? 1 : Math.exp(hueFit(a, c, target, scheme.tol) / 2));
+  const partner = (base, slot, dir) => {
+    const pool = pools[slot].filter(p => p !== base);
+    let w = pool.map(p => valuePartner(base, p, dir) * like(p));
+    if (!w.some(x => x > 0)) w = pool.map(p => ((p.lch.L - base.lch.L) * dir > 0 ? 1 / (1 + Math.abs(Math.abs(p.lch.L - base.lch.L) - 18)) : 0));
+    if (!w.some(x => x > 0)) return pool[0];
+    return pickWeighted(pool, (_, i) => w[i], rnd);
+  };
+
+  const cands = [];
+  for (let i = 0; i < 160; i++) {
+    const lk = slot => (locked[slot] ? D.byId[locked[slot]] : null);
+    const base = lk(0) || pickWeighted(pools[0], p => like(p) *
+      (scheme.baseMaxC != null ? Math.exp(-Math.max(0, p.lch.C - scheme.baseMaxC) / 6) : 1), rnd);
+    const sec = lk(3) || pickWeighted(pools[3], p => like(p) * fit(base, p, scheme.sec) *
+      (scheme.secMaxC != null ? Math.exp(-Math.max(0, p.lch.C - scheme.secMaxC) / 6) : 1), rnd);
+    const acc = lk(4) || pickWeighted(pools[4], p => like(p) * fit(base, p, scheme.acc) *
+      (scheme.accentKind ? (p.kind === scheme.accentKind ? 1 : 0.01) : 1) *
+      (scheme.accentMinC != null ? Math.exp(-Math.max(0, scheme.accentMinC - p.lch.C) / 10) : 1), rnd);
+    const sh = lk(1) || partner(base, 1, -1);
+    const hi = lk(2) || partner(base, 2, 1);
+    const ids = [base, sh, hi, sec, acc].map(p => p.id);
+    if (new Set(ids).size < 5) continue;
+    if (opts.avoid && ids.join('.') === opts.avoid) continue;
+    cands.push({ ids, ...scoreOpen(D, ids, scheme, model) });
+  }
+  if (!cands.length) return null;
+  const max = Math.max(...cands.map(c => c.score));
+  const pick = pickWeighted(cands, c => Math.exp((c.score - max) / Math.max(0.05, T)), rnd);
+  return { ids: pick.ids, scheme: scheme.id, score: pick.score, notes: pick.notes };
+}
+
 // ---------- names ----------
 export function hueFamily(lch) {
   if (lch.C < 15) return 'white';
@@ -195,12 +323,14 @@ export function moodFamily(lch) {
   return 'green';
 }
 
-export function nameFor(D, ids, schemeId) {
-  const N = D.names;
+export function nameFor(D, ids, schemeId, mode = 'cyber') {
+  const open = mode === 'open' && D.names.open;
+  const N = open ? D.names.open : D.names;
   const rnd = mulberry32(hashStr(ids.join('.') + '|' + schemeId));
   const pick = arr => arr[Math.floor(rnd() * arr.length)];
-  const hue = pick(N.hueWords[hueFamily(D.byId[ids[3]].lch)] || N.hueWords.white);
-  const mood = pick(N.moodWords[moodFamily(D.byId[ids[0]].lch)] || N.moodWords.neutral);
+  const hueSrc = D.byId[ids[open ? 0 : 3]], moodSrc = D.byId[ids[open ? 3 : 0]];
+  const hue = pick(N.hueWords[hueFamily(hueSrc.lch)] || N.hueWords.white);
+  const mood = pick(N.moodWords[moodFamily(moodSrc.lch)] || N.moodWords.neutral);
   let name = pick(N.patterns)
     .replace('{place}', pick(N.places))
     .replace('{noun}', pick(N.nouns))

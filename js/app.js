@@ -1,10 +1,18 @@
-import { prepare, buildModel, generate, scorePalette, nameFor, matchQuality } from './generator.js';
+import { prepare, buildModel, generate, scorePalette, generateOpen, scoreOpen, openPool, nameFor, matchQuality, modeOf } from './generator.js';
 
 const STORE = 'neonfacade.feedback.v1';
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 let D, committed = [], model, current = null;
+let mode = 'cyber';
+const MODES = {
+  cyber: { label: 'Cyberpunk', sub: 'Cyberpunk building palettes, matched to Warpaints Fanatic' },
+  open: { label: 'Any Warpaints', sub: 'Five-paint schemes built from the whole Warpaints Fanatic range' },
+};
+const roles = () => (mode === 'open' ? D.openRoles : D.roles);
+const schemeById = () => (mode === 'open' ? D.openSchemeById : D.schemeById);
+const schemeList = () => (mode === 'open' ? D.openSchemes : D.schemes);
 const locks = [false, false, false, false, false];
 let votes = [0, 0, 0, 0, 0];
 let rating = 0;
@@ -26,7 +34,7 @@ function allEntries() {
   }
   return out;
 }
-function rebuildModel() { model = buildModel(allEntries()); }
+function rebuildModel() { model = buildModel(allEntries(), mode); }
 
 // ---------- loading ----------
 async function getJSON(name, fallback) {
@@ -53,6 +61,7 @@ async function init() {
     return;
   }
   rebuildModel();
+  setMode(new URLSearchParams(location.search).get('m') === 'open' ? 'open' : 'cyber', false);
   if (!loadFromUrl()) regenerate(false);
   bind();
   renderLearned();
@@ -64,13 +73,21 @@ function loadFromUrl() {
   const p = new URLSearchParams(location.search);
   const s = p.get('s');
   if (!s) return false;
+  const m = p.get('m') === 'open' ? 'open' : 'cyber';
+  if (m !== mode) setMode(m, false);
   const ids = s.split('.');
-  if (ids.length !== 5 || !ids.every((id, i) => D.byId[id] && D.byId[id].tone === D.roles[i].tone)) {
+  const valid = (id, i) => {
+    const c = D.byId[id];
+    if (!c) return false;
+    return mode === 'open' ? openPool(D, i).includes(c) : c.tone === D.roles[i].tone;
+  };
+  if (ids.length !== 5 || !ids.every(valid)) {
     toast('That link has colours this version does not know, generated a new set');
     return false;
   }
-  const scheme = D.schemeById[p.get('k')] ? p.get('k') : D.schemes[0].id;
-  setCurrent({ ids, scheme, notes: scorePalette(D, ids, D.schemeById[scheme], model).notes }, null);
+  const scheme = schemeById()[p.get('k')] ? p.get('k') : schemeList()[0].id;
+  const score = mode === 'open' ? scoreOpen : scorePalette;
+  setCurrent({ ids, scheme, notes: score(D, ids, schemeById()[scheme], model).notes }, null);
   return true;
 }
 function setUrl(push) {
@@ -78,6 +95,7 @@ function setUrl(push) {
   u.search = '';
   u.searchParams.set('s', current.ids.join('.'));
   u.searchParams.set('k', current.scheme);
+  if (mode === 'open') u.searchParams.set('m', 'open');
   history[push ? 'pushState' : 'replaceState'](null, '', u);
 }
 
@@ -86,7 +104,8 @@ function regenerate(push = true, onlySlot = null) {
   const locked = current
     ? current.ids.map((id, i) => (onlySlot !== null ? (i === onlySlot ? null : id) : (locks[i] ? id : null)))
     : [null, null, null, null, null];
-  const res = generate(D, model, {
+  const gen = mode === 'open' ? generateOpen : generate;
+  const res = gen(D, model, {
     locked,
     temperature: parseFloat($('#temp').value),
     avoid: current?.ids.join('.'),
@@ -97,7 +116,7 @@ function regenerate(push = true, onlySlot = null) {
 }
 
 function setCurrent(res, push) {
-  current = { ...res, name: nameFor(D, res.ids, res.scheme) };
+  current = { ...res, name: nameFor(D, res.ids, res.scheme, mode) };
   votes = [0, 0, 0, 0, 0];
   rating = 0;
   $('#note').value = '';
@@ -105,9 +124,21 @@ function setCurrent(res, push) {
   if (push !== null) setUrl(push);
 }
 
+function setMode(m, regen = true) {
+  mode = m;
+  locks.fill(false);
+  current = null;
+  document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === mode));
+  $('#subtitle').textContent = MODES[mode].sub;
+  document.body.dataset.mode = mode;
+  rebuildModel();
+  renderLearned();
+  if (regen) regenerate(true);
+}
+
 // ---------- rendering ----------
-function paintRow(m) {
-  const q = matchQuality(m.dE);
+function paintRow(m, exact = false) {
+  const q = exact ? { tier: 1, label: 'This paint' } : matchQuality(m.dE);
   const p = m.paint;
   const href = D.linkTemplate.replace('{code}', encodeURIComponent(p.code));
   const flag = p.hueConfirmed === false ? ' <span class="flag" title="Glow hue not confirmed from the manufacturer">?</span>' : '';
@@ -115,41 +146,59 @@ function paintRow(m) {
     <span class="dot" style="background:${p.hex}"></span>
     <span class="pn">${esc(p.name)}${flag}</span>
     <span class="code">${p.code}</span>
-    <span class="de q${q.tier}">ΔE ${m.dE.toFixed(1)}</span></a>`;
+    <span class="de q${q.tier}">${exact ? 'Paint' : 'ΔE ' + m.dE.toFixed(1)}</span></a>`;
+}
+
+function openSwatchBody(c) {
+  const kind = { metallic: 'Metallic', fluoro: 'Fluorescent', effect: 'Effect' }[c.kind];
+  return `<dl class="vals"><dt>CODE</dt><dd>${c.code}</dd><dt>HEX</dt><dd>${c.hex.toUpperCase()}</dd><dt>RGB</dt><dd>${c.rgb.join(', ')}</dd><dt>RANGE</dt><dd>${esc(c.family)}${kind && kind !== c.family ? ' · ' + kind : ''}</dd></dl>
+      <div class="paints"><p class="opt-label">Warpaints Fanatic</p>${paintRow({ paint: c, dE: 0 }, true)}
+      <p class="opt-label">Close alternatives</p>${c.matches.best.slice(0, 2).map(m => paintRow(m)).join('')}</div>`;
 }
 
 function swatchHTML(c, role, slot) {
   const m = c.matches;
+  const v = votes[slot];
+  const tools = `<div class="tools">
+        <button class="tool" data-act="lock" aria-pressed="${locks[slot]}">${locks[slot] ? 'Locked' : 'Lock'}</button>
+        <button class="tool" data-act="reroll">Reroll</button>
+        <button class="tool vote ${v > 0 ? 'on' : ''}" data-act="up" aria-label="Good colour for this slot">▲</button>
+        <button class="tool vote ${v < 0 ? 'on bad' : ''}" data-act="down" aria-label="Bad colour for this slot">▼</button>
+      </div>`;
+  if (mode === 'open') {
+    return `<article class="swatch k-${c.kind} ${locks[slot] ? 'locked' : ''}" data-slot="${slot}">
+    <div class="chip" style="--c:${c.hex}"><span class="role">${slot + 1} · ${esc(role.label)}</span></div>
+    <div class="body">
+      <h3>${esc(c.name.replace(' (Effects)', ''))}</h3>
+      <p class="usage">${esc(role.usage)}</p>
+      ${openSwatchBody(c)}
+      ${tools}
+    </div></article>`;
+  }
   let extra = '';
   if (role.tone === 'lit' && m.fluoro && m.fluoro.dE < 30) extra = `<p class="opt-label">Fluorescent option</p>${paintRow(m.fluoro)}`;
   else if (c.tags?.includes('metal') && m.metallic && !m.best.some(b => b.paint.kind === 'metallic')) extra = `<p class="opt-label">Metallic option</p>${paintRow(m.metallic)}`;
-  const v = votes[slot];
   return `<article class="swatch ${role.tone} ${locks[slot] ? 'locked' : ''}" data-slot="${slot}">
     <div class="chip" style="--c:${c.hex}"><span class="role">${slot + 1} · ${esc(role.label)}</span></div>
     <div class="body">
       <h3>${esc(c.name)}</h3>
       <p class="usage">${esc(role.usage)}</p>
       <dl class="vals"><dt>HEX</dt><dd>${c.hex.toUpperCase()}</dd><dt>RGB</dt><dd>${c.rgb.join(', ')}</dd></dl>
-      <div class="paints"><p class="opt-label">Warpaints Fanatic</p>${m.best.map(paintRow).join('')}${extra}</div>
-      <div class="tools">
-        <button class="tool" data-act="lock" aria-pressed="${locks[slot]}">${locks[slot] ? 'Locked' : 'Lock'}</button>
-        <button class="tool" data-act="reroll">Reroll</button>
-        <button class="tool vote ${v > 0 ? 'on' : ''}" data-act="up" aria-label="Good colour for this slot">▲</button>
-        <button class="tool vote ${v < 0 ? 'on bad' : ''}" data-act="down" aria-label="Bad colour for this slot">▼</button>
-      </div>
+      <div class="paints"><p class="opt-label">Warpaints Fanatic</p>${m.best.map(x => paintRow(x)).join('')}${extra}</div>
+      ${tools}
     </div></article>`;
 }
 
 function render() {
   const cols = current.ids.map(id => D.byId[id]);
-  const scheme = D.schemeById[current.scheme];
+  const scheme = schemeById()[current.scheme];
   $('#setName').textContent = current.name;
-  document.title = `${current.name} · Neon Facade`;
+  document.title = `${current.name} · ${MODES[mode].label} · Neon Facade`;
   $('#schemeLabel').textContent = scheme.label;
   $('#schemeNote').textContent = scheme.note;
   $('#notes').innerHTML = (current.notes || []).map(n => `<li>${esc(n)}</li>`).join('');
   $('#strip').innerHTML = cols.map(c => `<span style="background:${c.hex}"></span>`).join('');
-  $('#swatches').innerHTML = cols.map((c, i) => swatchHTML(c, D.roles[i], i)).join('');
+  $('#swatches').innerHTML = cols.map((c, i) => swatchHTML(c, roles()[i], i)).join('');
   renderStars();
 }
 
@@ -170,22 +219,24 @@ function renderLearned() {
   const likes = entries.filter(e => e[1] > 0.05).slice(0, 6).map(chip).join('');
   const dislikes = entries.filter(e => e[1] < -0.05).reverse().slice(0, 6).map(chip).join('');
   const schemes = Object.entries(model.scheme).sort((a, b) => b[1] - a[1])
-    .map(([id, v]) => `${esc(D.schemeById[id]?.label || id)} ${v > 0 ? '+' : ''}${v.toFixed(2)}`).join(', ');
+    .map(([id, v]) => `${esc(schemeById()[id]?.label || id)} ${v > 0 ? '+' : ''}${v.toFixed(2)}`).join(', ');
   $('#learned').innerHTML = model.count
-    ? `<p class="meta">${model.count} rated set${model.count === 1 ? '' : 's'} (${committed.length} from feedback.json, ${localEntries().length} in this browser)</p>
+    ? `<p class="meta">${MODES[mode].label} mode: ${model.count} rated set${model.count === 1 ? '' : 's'} (${committed.length} from feedback.json, ${localEntries().length} in this browser, all modes)</p>
        <div class="lrow"><span class="lbl">Favouring</span>${likes || '<em>nothing yet</em>'}</div>
        <div class="lrow"><span class="lbl">Avoiding</span>${dislikes || '<em>nothing yet</em>'}</div>
        ${schemes ? `<p class="meta">Schemes: ${schemes}</p>` : ''}`
-    : '<p class="meta">No feedback yet. Rate a few sets and the generator starts leaning toward what you like.</p>';
+    : `<p class="meta">No ${MODES[mode].label} feedback yet. Rate a few sets and the generator starts leaning toward what you like. Each mode learns separately.</p>`;
 }
 
 function renderHistory() {
   const list = localEntries().slice().reverse().slice(0, 24);
   $('#history').innerHTML = list.length ? list.map(e => {
     const cols = e.ids.map(id => D.byId[id]).filter(Boolean);
-    const href = `?s=${e.ids.join('.')}&k=${encodeURIComponent(e.scheme || '')}`;
+    const em = modeOf(e);
+    const href = `?s=${e.ids.join('.')}&k=${encodeURIComponent(e.scheme || '')}${em === 'open' ? '&m=open' : ''}`;
     return `<a class="hist" href="${href}"><span class="mini">${cols.map(c => `<i style="background:${c.hex}"></i>`).join('')}</span>
-      <span class="hn">${esc(e.name || nameFor(D, e.ids, e.scheme))}</span>
+      <span class="hn">${esc(e.name || nameFor(D, e.ids, e.scheme, em))}</span>
+      <span class="hm">${MODES[em].label}</span>
       <span class="hs">${e.rating ? '★'.repeat(e.rating) + '☆'.repeat(5 - e.rating) : 'votes only'}</span></a>`;
   }).join('') : '<p class="meta">Sets you rate show up here, click one to bring it back.</p>';
 }
@@ -195,6 +246,7 @@ function saveFeedback() {
   if (!rating && votes.every(v => v === 0)) { toast('Pick a star rating or vote on a swatch first'); return; }
   const entry = {
     ts: new Date().toISOString(),
+    mode,
     ids: current.ids.slice(),
     scheme: current.scheme,
     name: current.name,
@@ -232,7 +284,14 @@ async function importFeedback(file) {
 }
 
 function paintList() {
-  const lines = [`${current.name} (${D.schemeById[current.scheme].label})`, location.href, ''];
+  const lines = [`${current.name} (${schemeById()[current.scheme].label})`, location.href, ''];
+  if (mode === 'open') {
+    current.ids.forEach((id, i) => {
+      const c = D.byId[id];
+      lines.push(`${D.openRoles[i].label}: Warpaints Fanatic ${c.name} (${c.code}) ${c.hex.toUpperCase()}`);
+    });
+    return lines.join('\n');
+  }
   current.ids.forEach((id, i) => {
     const c = D.byId[id], m = c.matches.best[0];
     let line = `${D.roles[i].label}: ${c.name} ${c.hex.toUpperCase()} -> Warpaints Fanatic ${m.paint.name} (${m.paint.code}, ΔE ${m.dE.toFixed(1)})`;
@@ -245,6 +304,10 @@ function paintList() {
 // ---------- events ----------
 function bind() {
   $('#regen').addEventListener('click', () => regenerate(true));
+  $('#modes').addEventListener('click', e => {
+    const b = e.target.closest('button[data-mode]');
+    if (b && b.dataset.mode !== mode) setMode(b.dataset.mode);
+  });
   $('#copyLink').addEventListener('click', () => copy(location.href, 'Link copied'));
   $('#copyList').addEventListener('click', () => copy(paintList(), 'Paint list copied'));
   $('#saveRating').addEventListener('click', saveFeedback);

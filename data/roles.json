@@ -1,10 +1,80 @@
 {
-  "note": "Five slots, in display order. tone must match a tone in colors.json.",
+  "note": "roles is the cyberpunk mode (tone must match colors.json). openRoles is the Any Warpaints mode (kinds lists which paint kinds can fill the slot).",
   "roles": [
-    {"key":"facade","label":"Facade","tone":"dark","usage":"Main walls and large panels. Basecoat the whole building in this, it carries most of the surface area."},
-    {"key":"structure","label":"Structure","tone":"dark","usage":"Girders, ductwork, window frames, recessed panels and roof clutter. A step lighter or darker than the facade so the shapes read."},
-    {"key":"accent","label":"Hardware","tone":"accent","usage":"Pipes, railings, AC units, antennas, hazard markings and weathering. Small areas, drybrush or edge highlight."},
-    {"key":"neon1","label":"Primary neon","tone":"lit","usage":"Main signage, holo-ads and the strongest light source. Paint over a white or very light basecoat, then glaze the glow onto nearby surfaces."},
-    {"key":"neon2","label":"Secondary neon","tone":"lit","usage":"Lit windows, edge strips, door lights and reflected glow on wet streets. Supports the primary, use it in more places but smaller."}
+    {
+      "key": "facade",
+      "label": "Facade",
+      "tone": "dark",
+      "usage": "Main walls and large panels. Basecoat the whole building in this, it carries most of the surface area."
+    },
+    {
+      "key": "structure",
+      "label": "Structure",
+      "tone": "dark",
+      "usage": "Girders, ductwork, window frames, recessed panels and roof clutter. A step lighter or darker than the facade so the shapes read."
+    },
+    {
+      "key": "accent",
+      "label": "Hardware",
+      "tone": "accent",
+      "usage": "Pipes, railings, AC units, antennas, hazard markings and weathering. Small areas, drybrush or edge highlight."
+    },
+    {
+      "key": "neon1",
+      "label": "Primary neon",
+      "tone": "lit",
+      "usage": "Main signage, holo-ads and the strongest light source. Paint over a white or very light basecoat, then glaze the glow onto nearby surfaces."
+    },
+    {
+      "key": "neon2",
+      "label": "Secondary neon",
+      "tone": "lit",
+      "usage": "Lit windows, edge strips, door lights and reflected glow on wet streets. Supports the primary, use it in more places but smaller."
+    }
+  ],
+  "openRoles": [
+    {
+      "key": "base",
+      "label": "Base",
+      "kinds": [
+        "standard"
+      ],
+      "usage": "Main colour over most of the model or terrain piece. Basecoat everything that will end up this colour."
+    },
+    {
+      "key": "shade",
+      "label": "Shade",
+      "kinds": [
+        "standard"
+      ],
+      "usage": "Darker partner of the base. Recesses, folds and deep shadow, layered or glazed into the base."
+    },
+    {
+      "key": "highlight",
+      "label": "Highlight",
+      "kinds": [
+        "standard"
+      ],
+      "usage": "Lighter partner of the base. Raised areas and edge highlights, keep it to the top surfaces."
+    },
+    {
+      "key": "secondary",
+      "label": "Secondary",
+      "kinds": [
+        "standard"
+      ],
+      "usage": "Second largest area: cloth, trim panels, straps, foliage or a contrasting armour section."
+    },
+    {
+      "key": "accent",
+      "label": "Accent",
+      "kinds": [
+        "standard",
+        "metallic",
+        "fluoro",
+        "effect"
+      ],
+      "usage": "Small spot colour that draws the eye: gems, lenses, insignia, metal fittings or an effect."
+    }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "note": "Word banks for set names. hue words key off the primary neon's hue family, mood words key off the facade. Names are deterministic: the same five colours always get the same name.",
+  "note": "Word banks for set names. hue words key off the primary neon's hue family, mood words key off the facade. Names are deterministic: the same five colours always get the same name. The open block is used by the Any Warpaints mode (hue from the base, mood from the secondary).",
   "patterns": [
     "{place} {noun}",
     "{hue} {noun}",
@@ -10,29 +10,312 @@
     "{place} {hue}",
     "{noun} at {place}"
   ],
-  "places": ["Kowloon","Shinjuku","Sector 7","the Lower Stack","Night Market","Undercity","Canal District","Megablock 9","Harbor Arcology","Chiba","Old Neon Row","Spire Junction","Dock 14","the Sprawl","Ring Road","Ward 3"],
-  "nouns": ["Static","Downpour","Afterhours","Overclock","Blackout","Rain Shift","Signal","Glitch","Arcade","Undertow","Long Night","Feedback","Lockdown","Heatwave","Brownout","Graveyard Shift","Crosstalk","Datastorm","Payday","Last Train"],
+  "places": [
+    "Kowloon",
+    "Shinjuku",
+    "Sector 7",
+    "the Lower Stack",
+    "Night Market",
+    "Undercity",
+    "Canal District",
+    "Megablock 9",
+    "Harbor Arcology",
+    "Chiba",
+    "Old Neon Row",
+    "Spire Junction",
+    "Dock 14",
+    "the Sprawl",
+    "Ring Road",
+    "Ward 3"
+  ],
+  "nouns": [
+    "Static",
+    "Downpour",
+    "Afterhours",
+    "Overclock",
+    "Blackout",
+    "Rain Shift",
+    "Signal",
+    "Glitch",
+    "Arcade",
+    "Undertow",
+    "Long Night",
+    "Feedback",
+    "Lockdown",
+    "Heatwave",
+    "Brownout",
+    "Graveyard Shift",
+    "Crosstalk",
+    "Datastorm",
+    "Payday",
+    "Last Train"
+  ],
   "hueWords": {
-    "magenta": ["Magenta","Sakura","Candy","Hot Pink","Fuchsia"],
-    "red": ["Crimson","Redline","Laser","Blood Neon"],
-    "orange": ["Sodium","Amber","Tangerine","Streetlamp"],
-    "yellow": ["Hazard","Taxi","Gold Rush","Caution"],
-    "lime": ["Acid","Lime","Radium","Battery"],
-    "green": ["Toxic","Matrix","Biohazard","Emerald"],
-    "aqua": ["Holo","Coolant","Mint","Lagoon"],
-    "cyan": ["Cyan","Ice","Glacier","Arc"],
-    "blue": ["Electric","Cobalt","Plasma","Azure"],
-    "violet": ["Ultraviolet","Violet","Blacklight","Synth"],
-    "white": ["Chrome","Halogen","White Noise","Fluorescent"]
+    "magenta": [
+      "Magenta",
+      "Sakura",
+      "Candy",
+      "Hot Pink",
+      "Fuchsia"
+    ],
+    "red": [
+      "Crimson",
+      "Redline",
+      "Laser",
+      "Blood Neon"
+    ],
+    "orange": [
+      "Sodium",
+      "Amber",
+      "Tangerine",
+      "Streetlamp"
+    ],
+    "yellow": [
+      "Hazard",
+      "Taxi",
+      "Gold Rush",
+      "Caution"
+    ],
+    "lime": [
+      "Acid",
+      "Lime",
+      "Radium",
+      "Battery"
+    ],
+    "green": [
+      "Toxic",
+      "Matrix",
+      "Biohazard",
+      "Emerald"
+    ],
+    "aqua": [
+      "Holo",
+      "Coolant",
+      "Mint",
+      "Lagoon"
+    ],
+    "cyan": [
+      "Cyan",
+      "Ice",
+      "Glacier",
+      "Arc"
+    ],
+    "blue": [
+      "Electric",
+      "Cobalt",
+      "Plasma",
+      "Azure"
+    ],
+    "violet": [
+      "Ultraviolet",
+      "Violet",
+      "Blacklight",
+      "Synth"
+    ],
+    "white": [
+      "Chrome",
+      "Halogen",
+      "White Noise",
+      "Fluorescent"
+    ]
   },
   "moodWords": {
-    "neutral": ["Concrete","Asphalt","Smog","Ashfall"],
-    "blue": ["Midnight","Cold","Rainy","Deepnight"],
-    "violet": ["Velvet","Bruised","Dusk","Nocturne"],
-    "teal": ["Deepwater","Harbor","Tidal","Submerged"],
-    "red": ["Rust","Ember","Oxide","Scorched"],
-    "warm": ["Sodium","Grimy","Tobacco","Smoldering"],
-    "olive": ["Toxic","Swamp","Smoggy","Industrial"],
-    "green": ["Jungle","Overgrown","Mossy","Feral"]
+    "neutral": [
+      "Concrete",
+      "Asphalt",
+      "Smog",
+      "Ashfall"
+    ],
+    "blue": [
+      "Midnight",
+      "Cold",
+      "Rainy",
+      "Deepnight"
+    ],
+    "violet": [
+      "Velvet",
+      "Bruised",
+      "Dusk",
+      "Nocturne"
+    ],
+    "teal": [
+      "Deepwater",
+      "Harbor",
+      "Tidal",
+      "Submerged"
+    ],
+    "red": [
+      "Rust",
+      "Ember",
+      "Oxide",
+      "Scorched"
+    ],
+    "warm": [
+      "Sodium",
+      "Grimy",
+      "Tobacco",
+      "Smoldering"
+    ],
+    "olive": [
+      "Toxic",
+      "Swamp",
+      "Smoggy",
+      "Industrial"
+    ],
+    "green": [
+      "Jungle",
+      "Overgrown",
+      "Mossy",
+      "Feral"
+    ]
+  },
+  "open": {
+    "patterns": [
+      "{place} {noun}",
+      "{hue} {noun}",
+      "{mood} {hue}",
+      "{noun} of {place}",
+      "{hue} {noun} of {place}",
+      "{mood} {noun}",
+      "{place} {hue}"
+    ],
+    "places": [
+      "Highmoor",
+      "the Old Quarter",
+      "Ravenhold",
+      "Saltmarsh",
+      "the Borderlands",
+      "Kingsbridge",
+      "Emberfall",
+      "the Steppe",
+      "Greywater",
+      "Thornwood",
+      "the Citadel",
+      "Duskvale",
+      "the Frontier",
+      "Stonegate",
+      "Ashford",
+      "the High Pass"
+    ],
+    "nouns": [
+      "Banner",
+      "Vanguard",
+      "Harvest",
+      "Watch",
+      "Warband",
+      "Pilgrimage",
+      "Muster",
+      "Garrison",
+      "Expedition",
+      "Reliquary",
+      "Campaign",
+      "Covenant",
+      "Hunt",
+      "Livery",
+      "Regiment",
+      "Caravan",
+      "Outpost",
+      "Tithe"
+    ],
+    "hueWords": {
+      "magenta": [
+        "Rose",
+        "Mulberry",
+        "Orchid"
+      ],
+      "red": [
+        "Crimson",
+        "Scarlet",
+        "Madder"
+      ],
+      "orange": [
+        "Ochre",
+        "Copper",
+        "Saffron"
+      ],
+      "yellow": [
+        "Gold",
+        "Mustard",
+        "Straw"
+      ],
+      "lime": [
+        "Moss",
+        "Lichen",
+        "Chartreuse"
+      ],
+      "green": [
+        "Verdant",
+        "Forest",
+        "Jade"
+      ],
+      "aqua": [
+        "Seaglass",
+        "Teal",
+        "Celadon"
+      ],
+      "cyan": [
+        "Azure",
+        "Glacier",
+        "Cerulean"
+      ],
+      "blue": [
+        "Cobalt",
+        "Indigo",
+        "Sapphire"
+      ],
+      "violet": [
+        "Amethyst",
+        "Heather",
+        "Royal"
+      ],
+      "white": [
+        "Ashen",
+        "Bone",
+        "Iron",
+        "Pewter"
+      ]
+    },
+    "moodWords": {
+      "neutral": [
+        "Weathered",
+        "Dusty",
+        "Plain"
+      ],
+      "blue": [
+        "Wintry",
+        "Cold",
+        "Northern"
+      ],
+      "violet": [
+        "Twilight",
+        "Velvet",
+        "Regal"
+      ],
+      "teal": [
+        "Coastal",
+        "Tidal",
+        "Misty"
+      ],
+      "red": [
+        "Ember",
+        "Autumn",
+        "Blooded"
+      ],
+      "warm": [
+        "Sunbaked",
+        "Amber",
+        "Golden"
+      ],
+      "olive": [
+        "Field",
+        "Marsh",
+        "Hedgerow"
+      ],
+      "green": [
+        "Woodland",
+        "Spring",
+        "Wild"
+      ]
+    }
   }
 }

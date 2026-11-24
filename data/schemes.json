@@ -1,10 +1,112 @@
 {
-  "note": "Harmony rules for the two neon slots. hueOffset is the target hue distance (CIELCh degrees) between primary and secondary neon, tolerance is how strict. darkTint picks what hue the facade should lean toward: primary, secondary, complement (opposite of primary), between (midpoint of both neons) or cool (blue-black).",
+  "note": "Harmony rules for the two neon slots. hueOffset is the target hue distance (CIELCh degrees) between primary and secondary neon, tolerance is how strict. darkTint picks what hue the facade should lean toward: primary, secondary, complement (opposite of primary), between (midpoint of both neons) or cool (blue-black). openSchemes drive the Any Warpaints mode: sec and acc are target hue distances from the base (null means no hue target), secAcc is the target between secondary and accent.",
   "schemes": [
-    {"id":"complementary","label":"Complementary clash","hueOffset":175,"tolerance":25,"darkTint":"cool","weight":1.2,"note":"Opposite neons, maximum pop. The classic magenta and cyan look."},
-    {"id":"split","label":"Split complementary","hueOffset":145,"tolerance":22,"darkTint":"between","weight":1.1,"note":"Near-opposite neons, slightly softer than a straight clash."},
-    {"id":"triadic","label":"Triadic accent","hueOffset":120,"tolerance":18,"darkTint":"complement","weight":0.8,"note":"Neons a third of the wheel apart, facade pulls toward the missing third."},
-    {"id":"analogous","label":"Analogous glow","hueOffset":45,"tolerance":18,"darkTint":"primary","weight":0.7,"note":"Neighbouring neons that bleed into each other, facade tinted the same way. Moody and cohesive."},
-    {"id":"monoglow","label":"Single-hue glow","hueOffset":15,"tolerance":12,"darkTint":"primary","weight":0.4,"note":"One dominant light colour in two intensities, very cinematic."}
+    {
+      "id": "complementary",
+      "label": "Complementary clash",
+      "hueOffset": 175,
+      "tolerance": 25,
+      "darkTint": "cool",
+      "weight": 1.2,
+      "note": "Opposite neons, maximum pop. The classic magenta and cyan look."
+    },
+    {
+      "id": "split",
+      "label": "Split complementary",
+      "hueOffset": 145,
+      "tolerance": 22,
+      "darkTint": "between",
+      "weight": 1.1,
+      "note": "Near-opposite neons, slightly softer than a straight clash."
+    },
+    {
+      "id": "triadic",
+      "label": "Triadic accent",
+      "hueOffset": 120,
+      "tolerance": 18,
+      "darkTint": "complement",
+      "weight": 0.8,
+      "note": "Neons a third of the wheel apart, facade pulls toward the missing third."
+    },
+    {
+      "id": "analogous",
+      "label": "Analogous glow",
+      "hueOffset": 45,
+      "tolerance": 18,
+      "darkTint": "primary",
+      "weight": 0.7,
+      "note": "Neighbouring neons that bleed into each other, facade tinted the same way. Moody and cohesive."
+    },
+    {
+      "id": "monoglow",
+      "label": "Single-hue glow",
+      "hueOffset": 15,
+      "tolerance": 12,
+      "darkTint": "primary",
+      "weight": 0.4,
+      "note": "One dominant light colour in two intensities, very cinematic."
+    }
+  ],
+  "openSchemes": [
+    {
+      "id": "o-complementary",
+      "label": "Complementary",
+      "sec": 180,
+      "acc": null,
+      "tol": 30,
+      "weight": 1.1,
+      "note": "Base and secondary sit opposite on the wheel for maximum contrast."
+    },
+    {
+      "id": "o-split",
+      "label": "Split complementary",
+      "sec": 150,
+      "acc": 150,
+      "secAcc": 60,
+      "tol": 25,
+      "weight": 1.0,
+      "note": "Secondary and accent flank the base's complement, contrast with less clash."
+    },
+    {
+      "id": "o-triadic",
+      "label": "Triadic",
+      "sec": 120,
+      "acc": 120,
+      "secAcc": 120,
+      "tol": 25,
+      "weight": 0.9,
+      "note": "Three hues evenly spaced, lively and balanced."
+    },
+    {
+      "id": "o-analogous",
+      "label": "Analogous with a pop",
+      "sec": 35,
+      "acc": 180,
+      "tol": 20,
+      "weight": 1.0,
+      "note": "Neighbouring base and secondary for harmony, accent from the opposite side to pop."
+    },
+    {
+      "id": "o-monochrome",
+      "label": "Monochrome and metal",
+      "sec": 15,
+      "acc": null,
+      "tol": 15,
+      "accentKind": "metallic",
+      "weight": 0.7,
+      "note": "One hue family in different values, finished with a metallic accent."
+    },
+    {
+      "id": "o-muted",
+      "label": "Muted with a pop",
+      "sec": null,
+      "acc": null,
+      "tol": 30,
+      "baseMaxC": 20,
+      "secMaxC": 24,
+      "accentMinC": 45,
+      "weight": 0.9,
+      "note": "Drab, earthy base and secondary with one saturated accent, the classic wargame look."
+    }
   ]
 }

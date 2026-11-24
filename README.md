@@ -2,13 +2,19 @@
 
 Cyberpunk building paint palette randomizer. A static JavaScript page that generates five-colour paint schemes for cyberpunk buildings: two dark structural colours, one hardware accent and two lit neon colours. Every set gets a generated name, probable usage per swatch, hex and RGB values, and the closest Army Painter Warpaints Fanatic paints (including the fluorescent glow paints for the neon slots). You can rate sets and vote on individual swatches, and the generator learns from that feedback.
 
+## Modes
+
+The switch in the header picks between two generators. Cyberpunk is the original: a curated library of dark, hardware and neon colours, each matched to the nearest Fanatic paints. Any Warpaints is for everything else, minis, terrain, vehicles, any genre. It builds a classic five-paint scheme straight from the whole Fanatic range (every paint except washes, varnishes and mediums): Base, a Shade and Highlight from the base's own triad where possible, a Secondary chosen by the harmony scheme, and an Accent that can be any paint including metallics, fluorescents and effects. Its schemes are complementary, split complementary, triadic, analogous with a pop, monochrome and metal, and muted with a pop. Swatches in this mode show the paint itself plus its two closest alternatives, and set names use a non-cyberpunk word bank.
+
+Each mode learns from its own feedback only. The URL carries the mode (`&m=open`), so shared links open in the right one.
+
 ## Running it
 
 It is plain HTML, CSS and ES modules with JSON data, so GitHub Pages serves it as is from `index.html`. Locally, browsers block `fetch()` of the JSON files from `file://`, so serve the folder: `python3 -m http.server 8000` then open `http://localhost:8000/`.
 
 ## Sharing a set
 
-The URL always reflects the current set, for example `index.html?s=d-void-navy.d-slate-concrete.a-chrome-trim.l-hot-magenta.l-cyber-cyan&k=complementary`. `s` is the five colour ids in slot order and `k` is the harmony scheme. The name is derived from those, so the same link always shows the same set and the same name. Back and forward in the browser step through sets you generated.
+The URL always reflects the current set, for example `index.html?s=d-void-navy.d-slate-concrete.a-chrome-trim.l-hot-magenta.l-cyber-cyan&k=complementary`. `s` is the five colour ids in slot order (Fanatic product codes in Any Warpaints mode), `k` is the harmony scheme and `m=open` marks Any Warpaints mode. The name is derived from those, so the same link always shows the same set and the same name. Back and forward in the browser step through sets you generated.
 
 ## Files
 
@@ -20,10 +26,10 @@ The URL always reflects the current set, for example `index.html?s=d-void-navy.d
 | `js/generator.js` | Pure logic: paint matching, scoring, generation, learning, naming (no DOM, testable in node) |
 | `js/app.js` | UI, URL handling, feedback storage |
 | `data/colors.json` | The generator's colour library, tagged dark, accent or lit |
-| `data/roles.json` | The five slots and their usage text |
-| `data/schemes.json` | Harmony rules for the neon pair and facade tint |
+| `data/roles.json` | The five slots and their usage text, per mode |
+| `data/schemes.json` | Harmony rules for both modes |
 | `data/paints.json` | Warpaints Fanatic names, codes, families and approximate hex |
-| `data/names.json` | Word banks and patterns for set names |
+| `data/names.json` | Word banks and patterns for set names, per mode |
 | `data/feedback.json` | Committed feedback that ships with the site |
 
 ## How generation works
